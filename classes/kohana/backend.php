@@ -14,9 +14,12 @@ abstract class Kohana_Backend {
     }
 
     private $_config;
+    private $_semaphore_id;
     private $_units = array();
+    private $_threads = array();
 
     private function __construct() {
+        $this->_semaphore_id = sem_get(59736904703);
         $this->_config = Kohana::$config->load('backend.default');
     }
 
@@ -38,9 +41,24 @@ abstract class Kohana_Backend {
         $this->_units[sha1($unit_name)]->run();
     }
 
-    public function start() {
+    public function is_running() {
+        $running = false;
+        foreach ($this->_threads as $index => $thread) {
+            if ($thread->isAlive()) {
+                return true;
+            } else {
+                unset($this->_threads[$index]);
+            }
+        }
+        return false;
+    }
 
-        $threads = array();
+    public function start() {
+        if ($this->is_running())
+            throw new Kohana_Exception('Backend is already running.');
+
+        sem_acquire($this->_semaphore_id);
+
         $index = 0;
 
         foreach ($this->_units as $unit) {
@@ -54,22 +72,13 @@ abstract class Kohana_Backend {
 
             if (Thread::available()) {
 
-                $threads[$index] = new Thread('execute_unit');
-                $threads[$index]->start($unit);
-
-                while (!empty($threads)) {
-                    foreach ($threads as $index => $thread) {
-                        if (!$thread->isAlive()) {
-                            unset($threads[$index]);
-                        }
-                    }
-                    // let the CPU do its work
-                    sleep(1);
-                }
+                $this->_threads[$index] = new Thread('execute_unit');
+                $this->_threads[$index]->start($unit);
             } else {
                 execute_unit($unit);
             }
         }
+        sem_release($this->_semaphore_id);
     }
 
 }

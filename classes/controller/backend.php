@@ -20,14 +20,9 @@ class Controller_Backend extends Controller {
 
 
         Backend::instance()->start();
-        
-        
     }
 
 }
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 ?>
