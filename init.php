@@ -1,14 +1,31 @@
 <?php
 
-Route::set('backend', '<controller>/<unit>/<key>', array(
+Route::set('backend', '<controller>(/<action>)/<key>', array(
     'controller' => 'backend',
-    'task' => 'mail'
+    'action' => 'start|stop|kill|status',
     
     
     
-));
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+))->defaults(
+        array(
+            'action' => 'status'
+            
+        )
+        );
+
+
+Route::set('backend_unit', '<controller>(/<action>/<unit>)/<key>', array(
+    'controller' => 'backend',
+    'action' => 'start|stop|kill|status',
+    'unit' => 'mail'
+    
+    
+    
+))->defaults(
+        array(
+            'action' => 'status'
+            
+        )
+        );
+
 ?>

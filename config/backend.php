@@ -5,7 +5,7 @@ return array(
     'default' => array(
         
         'units' => array(
-            'Unit_Mail'            
+            'Unit_Mail'
         )
         
         
