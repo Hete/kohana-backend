@@ -40,8 +40,10 @@ class Kohana_Backend implements Unit {
     ////////////////////////////////////////////////////////////////////////////
     // Work on single unit
 
-
-
+    /**
+     * Enregistre une unité. Cette unité sera executé à l'appel de run().
+     * @param Unit $unit
+     */
     public function register_unit(Unit $unit) {
         $this->_units[sha1($unit->name())] = $unit;
     }
@@ -54,6 +56,11 @@ class Kohana_Backend implements Unit {
         $this->_units[sha1($unit_name)]->run();
     }
 
+    /**
+     * Retire les threads mort.
+     * @param int $index est l'index du thread.
+     * @throws Kohana_Exception si le thread est actif.
+     */
     private function remove_dead_thread($index) {
         if (!$this->_threads[$index]->isAlive()) {
             unset($this->_threads[$index]);
@@ -62,6 +69,10 @@ class Kohana_Backend implements Unit {
         }
     }
 
+    /**
+     * Détermine si le Backend roule.
+     * @return boolean
+     */
     public function is_running() {
         foreach ($this->_threads as $index => $thread) {
             if ($thread->isAlive()) {
@@ -95,12 +106,12 @@ class Kohana_Backend implements Unit {
         $index = 0;
         foreach ($this->_units as $unit) {
 
-
+            /**
+             * Execute l'unité avec l'interval donné.
+             * @param type $unit
+             */
             function execute_unit($unit, $backend) {
-
-               
                 $shared_memory_id = shm_attach(hexdec(sha1($backend->name())));
-
                 while (shm_get_var($shared_memory_id, hexdec(sha1("backend.running")))) {
                     Backend::instance()->execute($unit->name());
                     sleep($unit->interval());
@@ -114,7 +125,12 @@ class Kohana_Backend implements Unit {
             } else {
                 execute_unit($unit, $this);
             }
+
+            $index++;
         }
+
+        // Attend que les threads terminent leurs exécutions.
+        $this->wait();
 
         shm_detach($shared_memory_id);
         sem_release($this->_semaphore_id);
