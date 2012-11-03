@@ -13,16 +13,12 @@ class Controller_Backend extends Controller {
     public function action_index() {
         if (sha1($this->request->param('key')) != $this->api_key)
             throw new Kohana_Exception("Wrong api key, access denied.");
-
-
-
-        Backend::instance()->load_units();
-
+        
+        Backend::instance()->register_unit(new Unit_Groupe());
 
         Backend::instance()->start();
     }
 
 }
-
 
 ?>

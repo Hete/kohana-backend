@@ -1,14 +1,8 @@
 <?php
 
-Route::set('backend', '<controller>/<unit>/<key>', array(
+Route::set('backend', '<controller>/<key>', array(
     'controller' => 'backend',
-    'task' => 'mail'
+))->defaults(
     
-    
-    
-));
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+);
 ?>
