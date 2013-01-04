@@ -1,13 +1,11 @@
 <?php
 
-interface Unit {
+/**
+ * 
+ */
+abstract class Unit extends Kohana_Unit {
 
-    public function name();
-    
-    public function run();
-    
-    public function interval();
-     
+ 
 }
 
 ?>

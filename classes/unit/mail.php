@@ -1,11 +1,12 @@
 <?php
+
 defined('SYSPATH') or die('No direct script access.');
+
 /**
  * Sample unit
  */
-class Unit_Mail implements Unit {
-    
-    
+class Unit_Mail extends Unit {
+
     public function interval() {
         return 200;
     }
@@ -18,7 +19,6 @@ class Unit_Mail implements Unit {
         
     }
 
-   
 }
 
 ?>
