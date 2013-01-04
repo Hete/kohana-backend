@@ -3,9 +3,9 @@
 defined('SYSPATH') or die('No direct script access.');
 
 /**
+ * Backend to deal with asynchronous tasks.
  * 
  * @package Backend
- * @category Unit
  * @author Guillaume Poirier-Morency <john.doe@example.com>
  * @copyright (c) 2013, Hète.ca Inc.
  */
@@ -15,25 +15,20 @@ class Kohana_Backend {
 
     /**
      * 
-     * @param type $name
-     * @return Kohana_Backend
+     * @param string $name
+     * @return Backend
      */
     public static function instance($name = "default") {
         return array_key_exists($name, Backend::$_instances) ? Backend::$_instances[$name] : Backend::$_instances[$name] = new Backend($name);
     }
 
     private $_config;
-    private $_name;
     private $_semaphore_id;
     private $_units = array();
 
     private function __construct($name) {
 
-        // One semaphore by backend's instance name. So multiple backend from $_instances.
-
-        $this->_name = $name;
-
-        $this->_semaphore_id = Semaphore::instance()->get(hexdec(sha1($this->_name)));
+        $this->_semaphore_id = Semaphore::instance()->get(hexdec(sha1($name)));
 
         $this->_config = Kohana::$config->load('backend.default');
 
@@ -48,14 +43,20 @@ class Kohana_Backend {
      */
     public function is_running() {
 
-        foreach ($this->_units as $unit) {
-            if ($unit->isAlive()) {
-                return TRUE;
+        if (Thread::available()) {
+            foreach ($this->_units as $unit) {
+                if ($unit->isAlive()) {
+                    return TRUE;
+                }
             }
         }
+
         return FALSE;
     }
 
+    /**
+     * Démarre le backend.
+     */
     public function start() {
 
         Semaphore::instance()->acquire($this->_semaphore_id);
@@ -71,17 +72,16 @@ class Kohana_Backend {
         Semaphore::instance()->release($this->_semaphore_id);
     }
 
+    /**
+     * Stop the backend
+     * @throws Kohana_Exception
+     */
     public function stop() {
-        if (!$this->is_running())
-            throw new Kohana_Exception('Backend is not running.');
-
-        foreach ($this->_units as $unit) {
-            $unit->stop();
+        if (Thread::available()) {
+            foreach ($this->_units as $unit) {
+                $unit->stop();
+            }
         }
-
-
-
-        // Threads will expire in the start method and release the semaphore
     }
 
     // Wait until all threads (active units) die
