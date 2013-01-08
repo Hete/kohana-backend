@@ -1,20 +1,17 @@
 <?php
 
-return array(
-    
-    'default' => array(
-        
-        'units' => array(
-            'Mail'
-        )
-        
-        
-    )
-    
-);
+defined('SYSPATH') or die('No direct script access.');
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+return array(
+    'default' => array(
+        'units' => array(
+             // List of units to load
+        ),
+        'semaphore' => array(
+            'file' => array(),
+            'orm' => array(),
+            'sysv' => array(),
+        ),
+    )
+);
 ?>

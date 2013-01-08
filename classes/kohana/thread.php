@@ -7,7 +7,8 @@ defined('SYSPATH') or die('No direct script access.');
 /**
  * Implements threading in PHP
  * 
- * @package <none>
+ * @package Backend
+ * @category Thread
  * @version 1.0.0 - stable
  * @author Tudor Barbu <miau@motane.lu>
  * @copyright MIT

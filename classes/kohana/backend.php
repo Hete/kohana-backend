@@ -66,7 +66,8 @@ class Kohana_Backend {
             $unit->start();
         }
 
-        // Attend que les threads terminent leurs exécutions.
+        // Units runs in their own process, managing their own resources.
+        // Wait until all units dies.
         $this->wait();
 
         Semaphore::instance()->release($this->_semaphore_id);
@@ -85,10 +86,15 @@ class Kohana_Backend {
     }
 
     // Wait until all threads (active units) die
-    public function wait($delay = 1000) {
+    /**
+     * 
+     * @param type $kill
+     * @param type $wait_per_unit
+     */
+    public function wait($kill = FALSE, $wait_per_unit = 1) {
         if (Thread::available()) {
             foreach ($this->_units as $unit) {
-                $unit->wait($delay);
+                $unit->wait($kill, $wait_per_unit);
             }
         }
     }

@@ -8,6 +8,7 @@ defined('SYSPATH') or die('No direct script access.');
 abstract class Kohana_Unit extends Thread {
 
     public $running;
+    protected $interval = 3600;
 
     /**
      * 
@@ -37,6 +38,7 @@ abstract class Kohana_Unit extends Thread {
 
     /**
      * Stop the unit.
+     * 
      * @param type $_signal
      * @param type $_wait
      */
@@ -46,14 +48,16 @@ abstract class Kohana_Unit extends Thread {
     }
 
     /**
-     * Wait for this thread to end.
-     * @param integer $delay microtime until the threads gets killed.
+     * Wait for this unit to stop. Kill it if $delay is passed.
+     * 
+     * @param integer $kill microtime until the threads gets killed. If NULL, 
+     * threads never gets killed and will terminate by itself.
      */
-    public function wait($delay = 1000) {
+    public function wait($kill = FALSE, $wait = 1) {
         $init = microtime();
         while ($this->isAlive()) {
-            wait(1);
-            if (microtime() - $init > $delay) {
+            wait($wait);
+            if ($kill !== FALSE && (microtime() - $init > $kill)) {
                 // We kill the thread
                 parent::kill();
             }
@@ -77,11 +81,6 @@ abstract class Kohana_Unit extends Thread {
      * Code executed in the unit
      */
     public abstract function run();
-
-    /**
-     * Interval to which this unit must be run
-     */
-    public abstract function interval();
 }
 
 ?>
