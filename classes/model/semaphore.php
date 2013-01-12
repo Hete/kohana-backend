@@ -2,7 +2,10 @@
 
 defined('SYSPATH') or die('No direct script access.');
 
-class Backend extends Kohana_Backend {
+/**
+ * 
+ */
+class Model_Semaphore extends Kohana_Model_Semaphore {
     
 }
 

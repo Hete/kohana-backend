@@ -28,7 +28,7 @@ class Kohana_Backend {
 
     private function __construct($name) {
 
-        $this->_semaphore_id = Semaphore::instance()->get(hexdec(sha1($name)));
+        $this->_semaphore_id = Semaphore::instance()->get((sha1($name)));
 
         $this->_config = Kohana::$config->load('backend.default');
 
@@ -59,11 +59,24 @@ class Kohana_Backend {
      */
     public function start() {
 
+
+        // Backend is already started
+        if (Semaphore::instance()->acquired($this->_semaphore_id)) {
+            Log::instance()->add(Log::NOTICE, "Backend is already started.");
+            return;
+        }
+
         Semaphore::instance()->acquire($this->_semaphore_id);
 
-        // Starts all registered units
-        foreach ($this->_units as $unit) {
-            $unit->start();
+        try {
+
+            // Starts all registered units
+            foreach ($this->_units as $unit) {
+                $unit->start();
+            }
+        } catch (Exception $e) {
+            Semaphore::instance()->release($this->_semaphore_id);
+            throw $e;
         }
 
         // Units runs in their own process, managing their own resources.
