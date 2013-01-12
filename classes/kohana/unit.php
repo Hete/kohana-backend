@@ -3,7 +3,17 @@
 defined('SYSPATH') or die('No direct script access.');
 
 /**
+ * Unit for backend. Use with care. You only need to implement run() and 
+ * interval() methods. 
  * 
+ * run method is the executable code you need to schedule.
+ * 
+ * interval tells in seconds the time between each executions.
+ * 
+ * @package Backend
+ * @category Unit
+ * @author Guillaume Poirier-Morency
+ * @copyright (c) 2013, Hète.ca Inc.
  */
 abstract class Kohana_Unit extends Thread {
 

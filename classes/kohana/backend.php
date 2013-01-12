@@ -59,7 +59,6 @@ class Kohana_Backend {
      */
     public function start() {
 
-
         // Backend is already started
         if (Semaphore::instance()->acquired($this->_semaphore_id)) {
             Log::instance()->add(Log::NOTICE, "Backend is already started.");

@@ -4,6 +4,10 @@ defined('SYSPATH') or die('No direct script access.');
 
 /**
  * 
+ * @package Backend
+ * @category Semaphore
+ * @author Guillaume Poirier-Morency
+ * @copyright (c) 2013, Hète.ca Inc.
  */
 abstract class Kohana_Semaphore {
 
