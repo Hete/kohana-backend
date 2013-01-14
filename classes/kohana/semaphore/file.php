@@ -8,7 +8,7 @@
  */
 class Kohana_Semaphore_File extends Semaphore {
 
-    public function get() {
+    public function get($key) {
         
     }
 
