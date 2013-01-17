@@ -75,6 +75,18 @@ abstract class Kohana_Unit extends Thread {
     }
 
     /**
+     * Logging system.
+     * 
+     * @param type $level
+     * @param type $message
+     * @param array $values
+     */
+    public function log($level, $message, array $values = NULL) {
+        echo "<p>" . __($message, $values) . "</p>";
+        Log::instance()->add($level, $message, $values);
+    }
+
+    /**
      * Internal running function.
      */
     protected function _run() {
