@@ -3,9 +3,9 @@
 -- http://www.phpmyadmin.net
 --
 -- Client: localhost
--- Généré le: Sam 12 Janvier 2013 à 07:25
--- Version du serveur: 5.5.28
--- Version de PHP: 5.4.9
+-- Généré le: Ven 18 Janvier 2013 à 22:53
+-- Version du serveur: 5.5.29
+-- Version de PHP: 5.4.10
 
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -29,9 +29,10 @@ SET time_zone = "+00:00";
 CREATE TABLE IF NOT EXISTS `acquirements` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `semaphore_id` int(10) unsigned NOT NULL,
+  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `semaphore_id` (`semaphore_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=31 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=507 ;
 
 -- --------------------------------------------------------
 
@@ -46,13 +47,6 @@ CREATE TABLE IF NOT EXISTS `semaphores` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `key` (`key`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=24 ;
-
---
--- Contenu de la table `semaphores`
---
-
-INSERT INTO `semaphores` (`id`, `key`, `max_acquire`) VALUES
-(23, '7505d64a54e061b7acd54ccd58b49dc43500b635', 1);
 
 --
 -- Contraintes pour les tables exportées
