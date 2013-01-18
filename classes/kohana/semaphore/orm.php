@@ -4,20 +4,23 @@ defined('SYSPATH') or die('No direct script access.');
 
 class Kohana_Semaphore_ORM extends Semaphore {
 
-    public function acquire($sem_identifier) {
+    public function acquire($sem_identifier, $max_acquire = 1) {
 
         // Load the semaphore
         $semaphore = ORM::factory("semaphore", $sem_identifier);
 
         if (!$semaphore->loaded()) {
             // Creating a new semaphore
+            $semaphore->id = $sem_identifier;
+            $semaphore->max_acquire = $max_acquire;
             $semaphore->create();
         }
 
         while ($semaphore->acquirements->count_all() >= $semaphore->max_acquire) {
-            wait(1);
+            sleep(1);
             $semaphore->reload();
         }
+
         $acquirement = ORM::factory("acquirement");
         $acquirement->semaphore = $semaphore;
         $acquirement->create();

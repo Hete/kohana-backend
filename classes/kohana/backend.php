@@ -38,6 +38,18 @@ class Kohana_Backend {
     }
 
     /**
+     * Logging system.
+     * 
+     * @param type $level
+     * @param type $message
+     * @param array $values
+     */
+    public function log($level, $message, array $values = NULL) {
+        echo "<li>" . __($message, $values) . "</li>";
+        Log::instance()->add($level, $message, $values);
+    }
+
+    /**
      * Détermine si le Backend roule.
      * @return boolean
      */
@@ -59,33 +71,57 @@ class Kohana_Backend {
      */
     public function start() {
 
+        echo "<ul>";
+
         // Backend is already started
         if (Semaphore::instance()->acquired($this->_semaphore_id)) {
+
             Log::instance()->add(Log::NOTICE, "Backend is already started.");
             return;
         }
 
-        Semaphore::instance()->acquire($this->_semaphore_id);
+        $this->log(Log::INFO, "Acquirering a semaphore");
+        $this->acquire();
 
         // Auto release
-        register_shutdown_function(array(Semaphore::instance(), "release"), $this->_semaphore_id);
+        register_shutdown_function(array($this, "release"));
 
-        try {
-
-            // Starts all registered units
-            foreach ($this->_units as $unit) {
-                $unit->start();
-            }
-        } catch (Exception $e) {
-            Semaphore::instance()->release($this->_semaphore_id);
-            throw $e;
-        }
+        $this->log(Log::INFO, "Starting the backend...");
+        $this->run();
 
         // Units runs in their own process, managing their own resources.
         // Wait until all units dies.
+        $this->log(Log::INFO, "Waiting after units...");
         $this->wait();
 
-        Semaphore::instance()->release($this->_semaphore_id);
+        $this->log(Log::INFO, "Releasing a semaphore...");
+        // Release the semaphore
+        $this->release();
+
+        $this->log(Log::INFO, "Backend has stopped.");
+
+        echo "</ul>";
+    }
+
+    public function run() {
+        try {
+            // Starts all registered units
+            foreach ($this->_units as $unit) {
+                $this->log(Log::INFO, "Starting unit :name...", array(":name" => get_class($unit)));
+                $unit->start();
+            }
+        } catch (Exception $e) {
+            $this->log(Log::ERROR, $e->getMessage());
+            continue;
+        }
+    }
+
+    private function acquire() {
+        return Semaphore::instance()->acquire($this->_semaphore_id);
+    }
+
+    private function release() {
+        return Semaphore::instance()->release($this->_semaphore_id);
     }
 
     /**
