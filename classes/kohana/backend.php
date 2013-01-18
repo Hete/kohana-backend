@@ -67,6 +67,9 @@ class Kohana_Backend {
 
         Semaphore::instance()->acquire($this->_semaphore_id);
 
+        // Auto release
+        register_shutdown_function(array(Semaphore::instance(), "release"), $this->_semaphore_id);
+
         try {
 
             // Starts all registered units
