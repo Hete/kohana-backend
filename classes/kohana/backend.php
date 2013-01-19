@@ -76,11 +76,10 @@ class Kohana_Backend {
         // Backend is already started
         if (Semaphore::instance()->acquired($this->_semaphore_id)) {
 
-            Log::instance()->add(Log::NOTICE, "Backend is already started.");
+            $this->log(Log::NOTICE, "Backend is already started.");
             return;
         }
 
-        $this->log(Log::INFO, "Acquirering a semaphore");
         $this->acquire();
 
         // Auto release
@@ -94,7 +93,6 @@ class Kohana_Backend {
         $this->log(Log::INFO, "Waiting after units...");
         $this->wait();
 
-        $this->log(Log::INFO, "Releasing a semaphore...");
         // Release the semaphore
         $this->release();
 
@@ -104,24 +102,36 @@ class Kohana_Backend {
     }
 
     public function run() {
-        try {
-            // Starts all registered units
-            foreach ($this->_units as $unit) {
+
+        // Starts all registered units
+        foreach ($this->_units as $unit) {
+            try {
                 $this->log(Log::INFO, "Starting unit :name...", array(":name" => get_class($unit)));
                 $unit->start();
+            } catch (Exception $e) {
+                $this->log(Log::ERROR, $e->getMessage());
+                // Execute next unit
+                continue;
             }
-        } catch (Exception $e) {
-            $this->log(Log::ERROR, $e->getMessage());
-            continue;
         }
     }
 
     private function acquire() {
+        $this->log(Log::INFO, "Acquireing semaphore with id :id", array(":id" => $this->_semaphore_id));
         return Semaphore::instance()->acquire($this->_semaphore_id);
     }
 
     private function release() {
+        $this->log(Log::INFO, "Releasing semaphore with id :id", array(":id" => $this->_semaphore_id));
         return Semaphore::instance()->release($this->_semaphore_id);
+    }
+
+    /**
+     * Release all acquirements. Single releasing is private.
+     */
+    public function remove() {
+        $this->log(Log::INFO, "Releasing all acquirements with semaphore with id :id", array(":id" => $this->_semaphore_id));
+        return Semaphore::instance()->remove($this->_semaphore_id);
     }
 
     /**
