@@ -11,6 +11,10 @@ defined('SYSPATH') or die('No direct script access.');
  */
 class Kohana_Backend {
 
+    /**
+     * Instances for multiple backends.
+     * @var array 
+     */
     protected static $_instances = array();
 
     /**
@@ -32,6 +36,7 @@ class Kohana_Backend {
 
         $this->_config = Kohana::$config->load('backend.default');
 
+        // Load all configured units
         foreach ($this->_config["units"] as $unit) {
             $this->_units[] = Unit::factory($unit);
         }
@@ -44,7 +49,7 @@ class Kohana_Backend {
      * @param type $message
      * @param array $values
      */
-    public function log($level, $message, array $values = NULL) {
+    public static function log($level, $message, array $values = NULL) {
         echo "<li>" . __($message, $values) . "</li>";
         Log::instance()->add($level, $message, $values);
     }
@@ -76,7 +81,7 @@ class Kohana_Backend {
         // Backend is already started
         if (Semaphore::instance()->acquired($this->_semaphore_id)) {
 
-            $this->log(Log::NOTICE, "Backend is already started.");
+            static::log(Log::NOTICE, "Backend is already started.");
             return;
         }
 
@@ -85,18 +90,18 @@ class Kohana_Backend {
         // Auto release
         register_shutdown_function(array($this, "release"));
 
-        $this->log(Log::INFO, "Starting the backend...");
+        static::log(Log::INFO, "Starting the backend...");
         $this->run();
 
         // Units runs in their own process, managing their own resources.
         // Wait until all units dies.
-        $this->log(Log::INFO, "Waiting after units...");
+        static::log(Log::INFO, "Waiting after units...");
         $this->wait();
 
         // Release the semaphore
         $this->release();
 
-        $this->log(Log::INFO, "Backend has stopped.");
+        static::log(Log::INFO, "Backend has stopped.");
 
         echo "</ul>";
     }
@@ -106,10 +111,10 @@ class Kohana_Backend {
         // Starts all registered units
         foreach ($this->_units as $unit) {
             try {
-                $this->log(Log::INFO, "Starting unit :name...", array(":name" => get_class($unit)));
+                static::log(Log::INFO, "Starting unit :name...", array(":name" => get_class($unit)));
                 $unit->start();
             } catch (Exception $e) {
-                $this->log(Log::ERROR, $e->getMessage());
+                static::log(Log::ERROR, $e->getMessage());
                 // Execute next unit
                 continue;
             }
@@ -117,12 +122,12 @@ class Kohana_Backend {
     }
 
     private function acquire() {
-        $this->log(Log::INFO, "Acquireing semaphore with id :id", array(":id" => $this->_semaphore_id));
+        static::log(Log::INFO, "Acquireing semaphore with id :id", array(":id" => $this->_semaphore_id));
         return Semaphore::instance()->acquire($this->_semaphore_id);
     }
 
     private function release() {
-        $this->log(Log::INFO, "Releasing semaphore with id :id", array(":id" => $this->_semaphore_id));
+        static::log(Log::INFO, "Releasing semaphore with id :id", array(":id" => $this->_semaphore_id));
         return Semaphore::instance()->release($this->_semaphore_id);
     }
 
@@ -130,7 +135,7 @@ class Kohana_Backend {
      * Release all acquirements. Single releasing is private.
      */
     public function remove() {
-        $this->log(Log::INFO, "Releasing all acquirements with semaphore with id :id", array(":id" => $this->_semaphore_id));
+        static::log(Log::INFO, "Releasing all acquirements with semaphore with id :id", array(":id" => $this->_semaphore_id));
         return Semaphore::instance()->remove($this->_semaphore_id);
     }
 

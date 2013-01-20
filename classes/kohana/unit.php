@@ -77,15 +77,12 @@ abstract class Kohana_Unit extends Thread {
     }
 
     /**
-     * Logging system.
+     * Alias for Backend::log
      * 
-     * @param type $level
-     * @param type $message
-     * @param array $values
+     * @see Backend::log
      */
     public function log($level, $message, array $values = NULL) {
-        echo "<li>" . __($message, $values) . "</li>";
-        Log::instance()->add($level, $message, $values);
+        Backend::log($level, $message, $values);
     }
 
     /**
