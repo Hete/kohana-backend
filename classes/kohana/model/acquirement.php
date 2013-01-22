@@ -17,8 +17,8 @@ class Kohana_Model_Acquirement extends ORM {
     public function rules() {
         return array(
             "semaphore_id" => array(
-                // Respects maximum acquirements
-                array("smaller", array($this->semaphore->acquirements->where("id", "!=", $this->pk())->count_all(), $this->semaphore->max_acquire))
+                // Always one free acquirement
+                array("range", array($this->semaphore->acquirements->count_all(), 0, $this->semaphore->max_acquire - 1))
             ),
         );
     }

@@ -7,7 +7,7 @@ defined('SYSPATH') or die('No direct script access.');
  * 
  * @package Backend
  * @category Model
- * @author Guillaume Poirier-Morency
+ * @author Guillaume Poirier-Morency <guillaumepoiriermorency@gmail.com>
  * @copyright (c) 2013, Hète.ca Inc.
  */
 class Kohana_Model_Semaphore extends ORM {
@@ -24,6 +24,7 @@ class Kohana_Model_Semaphore extends ORM {
                 array(array($this, "unique"), array(":field", ":value")),
             ),
             "max_acquire" => array(
+                array("range", array(":value", 1, PHP_INT_MAX))
             ),
         );
     }
