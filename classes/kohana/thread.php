@@ -2,7 +2,8 @@
 
 defined('SYSPATH') or die('No direct script access.');
 
-        const SIGTERM = 15, SIGKILL = 9;
+defined('SIGTERM') or define('SIGTERM', 15);
+defined('SIGKILL') or define('SIGKILL', 9);
 
 /**
  * Implements threading in PHP
