@@ -110,14 +110,8 @@ class Kohana_Backend {
 
         // Starts all registered units
         foreach ($this->_units as $unit) {
-            try {
-                static::log(Log::INFO, "Starting unit :name...", array(":name" => get_class($unit)));
-                $unit->start();
-            } catch (Exception $e) {
-                static::log(Log::ERROR, $e->getMessage());
-                // Execute next unit
-                continue;
-            }
+            static::log(Log::INFO, "Starting unit :name...", array(":name" => get_class($unit)));
+            $unit->start();
         }
     }
 
