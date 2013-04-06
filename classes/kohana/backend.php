@@ -22,7 +22,7 @@ class Kohana_Backend {
      * @param string $name
      * @return Backend
      */
-    public static function instance($name = "default", Log_Writer $log_writer = NULL) {
+    public static function instance($name = "default") {
         return array_key_exists($name, Backend::$_instances) ? Backend::$_instances[$name] : Backend::$_instances[$name] = new Backend($name);
     }
 
@@ -36,13 +36,9 @@ class Kohana_Backend {
      */
     private $_log_writer;
 
-    private function __construct($name, Log_Writer $log_writer = NULL) {
+    private function __construct($name) {
 
-        if ($log_writer === NULL) {
-            $log_writer = new Log_Backend();
-        }
-
-        $this->_log_writer = $log_writer;
+        $this->_log_writer = new Log_Backend();
 
         $this->_semaphore_id = Semaphore::instance()->get(sha1($name));
 
@@ -50,7 +46,7 @@ class Kohana_Backend {
 
         // Load all configured units
         foreach ($this->_config["units"] as $unit) {
-            $this->_units[] = Unit::factory($unit, $log_writer);
+            $this->_units[] = Unit::factory($unit, $this->_log_writer);
         }
     }
 
