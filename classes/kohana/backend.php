@@ -30,11 +30,19 @@ class Kohana_Backend {
     private $_semaphore_id;
     private $_units = array();
 
+    /**
+     *
+     * @var Log_Backend
+     */
+    private $_log_writer;
+
     private function __construct($name) {
 
         $this->_semaphore_id = Semaphore::instance()->get((sha1($name)));
 
         $this->_config = Kohana::$config->load('backend.default');
+
+        $this->_log_writer = new Log_Backend();
 
         // Load all configured units
         foreach ($this->_config["units"] as $unit) {
@@ -42,16 +50,8 @@ class Kohana_Backend {
         }
     }
 
-    /**
-     * Logging system.
-     * 
-     * @param type $level
-     * @param type $message
-     * @param array $values
-     */
-    public static function log($level, $message, array $values = NULL) {
-        echo "<li>" . __($message, $values) . "</li>";
-        Log::instance()->add($level, $message, $values);
+    public function messages() {
+        return $this->_log_writer->messages;
     }
 
     /**
@@ -76,12 +76,12 @@ class Kohana_Backend {
      */
     public function start() {
 
-        echo "<ul>";
+        Log::instance()->attach($this->_log_writer);
 
         // Backend is already started
         if (Semaphore::instance()->acquired($this->_semaphore_id)) {
 
-            static::log(Log::NOTICE, "Backend is already started.");
+            Log::instance()->add(Log::NOTICE, "Backend is already started.");
             return;
         }
 
@@ -90,38 +90,45 @@ class Kohana_Backend {
         // Auto release
         register_shutdown_function(array($this, "release"));
 
-        static::log(Log::INFO, "Starting the backend...");
-        $this->run();
-
-        // Units runs in their own process, managing their own resources.
-        // Wait until all units dies.
-        static::log(Log::INFO, "Waiting after units...");
-        $this->wait();
+        try {
+            Log::instance()->add(Log::INFO, "Starting the backend...");
+            $this->run();
+            // Units runs in their own process, managing their own resources.
+            // Wait until all units dies.            
+            Log::instance()->add(Log::INFO, "Waiting after units...");
+            $this->wait();
+        } catch (Exception $e) {
+            // Release the semaphore
+            $this->release();
+            throw $e;
+        }
 
         // Release the semaphore
         $this->release();
 
-        static::log(Log::INFO, "Backend has stopped.");
+        Log::instance()->add(Log::INFO, "Backend has stopped.");
 
-        echo "</ul>";
+        Log::instance()->write();
+
+        Log::instance()->detach($this->_log_writer);
     }
 
     public function run() {
 
         // Starts all registered units
         foreach ($this->_units as $unit) {
-            static::log(Log::INFO, "Starting unit :name...", array(":name" => get_class($unit)));
+            Log::instance()->add(Log::INFO, "Starting unit :name...", array(":name" => get_class($unit)));
             $unit->start();
         }
     }
 
     private function acquire() {
-        static::log(Log::INFO, "Acquireing semaphore with id :id", array(":id" => $this->_semaphore_id));
+        Log::instance()->add(Log::INFO, "Acquireing semaphore with id :id", array(":id" => $this->_semaphore_id));
         return Semaphore::instance()->acquire($this->_semaphore_id);
     }
 
     private function release() {
-        static::log(Log::INFO, "Releasing semaphore with id :id", array(":id" => $this->_semaphore_id));
+        Log::instance()->add(Log::INFO, "Releasing semaphore with id :id", array(":id" => $this->_semaphore_id));
         return Semaphore::instance()->release($this->_semaphore_id);
     }
 
@@ -129,7 +136,7 @@ class Kohana_Backend {
      * Release all acquirements. Single releasing is private.
      */
     public function remove() {
-        static::log(Log::INFO, "Releasing all acquirements with semaphore with id :id", array(":id" => $this->_semaphore_id));
+        Log::instance()->add(Log::INFO, "Releasing all acquirements with semaphore with id :id", array(":id" => $this->_semaphore_id));
         return Semaphore::instance()->remove($this->_semaphore_id);
     }
 

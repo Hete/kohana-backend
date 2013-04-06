@@ -38,14 +38,12 @@ abstract class Kohana_Unit extends Thread {
      * Start the unit.
      */
     public function start() {
-        echo "<ul>";
         if (Thread::available()) {
             parent::start();
             $this->running = TRUE;
         } else {
             $this->run();
         }
-        echo "</ul>";
     }
 
     /**
@@ -74,15 +72,6 @@ abstract class Kohana_Unit extends Thread {
                 parent::kill();
             }
         }
-    }
-
-    /**
-     * Alias for Backend::log
-     * 
-     * @see Backend::log
-     */
-    public function log($level, $message, array $values = NULL) {
-        Backend::log($level, $message, $values);
     }
 
     /**
