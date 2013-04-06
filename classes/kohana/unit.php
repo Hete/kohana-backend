@@ -19,31 +19,41 @@ abstract class Kohana_Unit extends Thread {
 
     public $running;
     protected $interval = 3600;
+    private $_log_writer;
 
     /**
      * 
      * @param string $name
      * @return \Unit
      */
-    public static function factory($name) {
+    public static function factory($name, Log_Writer $log_writer) {
         $class = "Unit_$name";
-        return new $class;
+        return new $class($log_writer);
     }
 
-    public function __construct() {
+    public function __construct(Log_Writer $log_writer) {
+
         parent::__construct(array($this, "_run"));
+
+        $this->_log_writer = $log_writer;
     }
 
     /**
      * Start the unit.
      */
     public function start() {
+
+        Log::instance()->attach($this->_log_writer);
+
         if (Thread::available()) {
             parent::start();
             $this->running = TRUE;
         } else {
             $this->run();
         }
+
+        // Flush writer
+        Log::instance()->write();
     }
 
     /**
@@ -90,7 +100,7 @@ abstract class Kohana_Unit extends Thread {
     /**
      * Code executed in the unit
      */
-    public abstract function run();
+    protected abstract function run();
 }
 
 ?>

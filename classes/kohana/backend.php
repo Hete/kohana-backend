@@ -22,7 +22,7 @@ class Kohana_Backend {
      * @param string $name
      * @return Backend
      */
-    public static function instance($name = "default") {
+    public static function instance($name = "default", Log_Writer $log_writer = NULL) {
         return array_key_exists($name, Backend::$_instances) ? Backend::$_instances[$name] : Backend::$_instances[$name] = new Backend($name);
     }
 
@@ -36,18 +36,30 @@ class Kohana_Backend {
      */
     private $_log_writer;
 
-    private function __construct($name) {
+    private function __construct($name, Log_Writer $log_writer = NULL) {
 
-        $this->_semaphore_id = Semaphore::instance()->get((sha1($name)));
+        if ($log_writer === NULL) {
+            $log_writer = new Log_Backend();
+        }
+
+        $this->_log_writer = $log_writer;
+
+        $this->_semaphore_id = Semaphore::instance()->get(sha1($name));
 
         $this->_config = Kohana::$config->load('backend.default');
 
-        $this->_log_writer = new Log_Backend();
-
         // Load all configured units
         foreach ($this->_config["units"] as $unit) {
-            $this->_units[] = Unit::factory($unit);
+            $this->_units[] = Unit::factory($unit, $log_writer);
         }
+    }
+
+    /**
+     * 
+     * @return \Log_Writer
+     */
+    public function log_writer() {
+        return $this->_log_writer;
     }
 
     public function messages() {
@@ -76,45 +88,38 @@ class Kohana_Backend {
      */
     public function start() {
 
-        Log::instance()->attach($this->_log_writer);
-
         // Backend is already started
         if (Semaphore::instance()->acquired($this->_semaphore_id)) {
-
             Log::instance()->add(Log::NOTICE, "Backend is already started.");
             return;
         }
+
+        Log::instance()->attach($this->_log_writer);
 
         $this->acquire();
 
         // Auto release
         register_shutdown_function(array($this, "release"));
 
-        try {
-            Log::instance()->add(Log::INFO, "Starting the backend...");
-            $this->run();
-            // Units runs in their own process, managing their own resources.
-            // Wait until all units dies.            
-            Log::instance()->add(Log::INFO, "Waiting after units...");
-            $this->wait();
-        } catch (Exception $e) {
-            // Release the semaphore
-            $this->release();
-            throw $e;
-        }
+        Log::instance()->add(Log::INFO, "Starting the backend...");
+        $this->run();
+
+        // Wait until all units dies.            
+        Log::instance()->add(Log::INFO, "Waiting after units...");
+        $this->wait();
 
         // Release the semaphore
         $this->release();
 
         Log::instance()->add(Log::INFO, "Backend has stopped.");
 
+        // Flush logs
         Log::instance()->write();
 
         Log::instance()->detach($this->_log_writer);
     }
 
     public function run() {
-
         // Starts all registered units
         foreach ($this->_units as $unit) {
             Log::instance()->add(Log::INFO, "Starting unit :name...", array(":name" => get_class($unit)));
