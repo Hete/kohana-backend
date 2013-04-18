@@ -11,14 +11,16 @@ defined('SYSPATH') or die('No direct script access.');
  * interval tells in seconds the time between each executions.
  * 
  * @package Backend
- * @category Unit
+ * @category Units
  * @author Guillaume Poirier-Morency <guillaumepoiriermorency@gmail.com>
  * @copyright (c) 2013, Hète.ca Inc.
  */
-abstract class Kohana_Unit extends Thread {
+abstract class Kohana_Unit {
 
-    public $running;
-    protected $interval = 3600;
+    /**
+     *
+     * @var Log_Writer
+     */
     private $_log_writer;
 
     /**
@@ -33,8 +35,6 @@ abstract class Kohana_Unit extends Thread {
 
     public function __construct(Log_Writer $log_writer) {
 
-        parent::__construct(array($this, "_run"));
-
         $this->_log_writer = $log_writer;
     }
 
@@ -45,56 +45,10 @@ abstract class Kohana_Unit extends Thread {
 
         Log::instance()->attach($this->_log_writer);
 
-        if (Thread::available()) {
-            parent::start();
-            $this->running = TRUE;
-        } else {
-            $this->run();
-        }
+        $this->run();
 
         // Flush writer
         Log::instance()->write();
-    }
-
-    /**
-     * Stop the unit.
-     * 
-     * @param type $_signal
-     * @param type $_wait
-     */
-    public function stop($_signal = SIGTERM, $_wait = TRUE) {
-        $this->running = FALSE;
-        parent::stop($_signal, $_wait);
-    }
-
-    /**
-     * Wait for this unit to stop. Kill it if $delay is passed.
-     * 
-     * @param integer $kill microtime until the threads gets killed. If NULL, 
-     * threads never gets killed and will terminate by itself.
-     */
-    public function wait($kill = FALSE, $wait = 1) {
-        $init = microtime();
-        while ($this->isAlive()) {
-            wait($wait);
-            if ($kill !== FALSE && (microtime() - $init > $kill)) {
-                // We kill the thread
-                parent::kill();
-            }
-        }
-    }
-
-    /**
-     * Internal running function.
-     */
-    protected function _run() {
-        while ($this->running) {
-            $init = mircotime();
-            $this->run();
-            $delay = microtime() - $init;
-            $true_delay = $this->interval() - $delay;
-            sleep($true_delay >= 0 ? $true_delay : 0);
-        }
     }
 
     /**
