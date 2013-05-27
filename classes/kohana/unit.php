@@ -15,27 +15,29 @@ defined('SYSPATH') or die('No direct script access.');
  * @author Guillaume Poirier-Morency <guillaumepoiriermorency@gmail.com>
  * @copyright (c) 2013, Hète.ca Inc.
  */
-abstract class Kohana_Unit {
-
-    /**
-     *
-     * @var Log_Writer
-     */
-    private $_log_writer;
+abstract class Kohana_Unit extends Thread {
 
     /**
      * 
      * @param string $name
      * @return \Unit
      */
-    public static function factory($name, Log_Writer $log_writer) {
+    public static function factory($name) {
         $class = "Unit_$name";
-        return new $class($log_writer);
+        return new $class();
     }
 
-    public function __construct(Log_Writer $log_writer) {
+    /**
+     * 
+     * @param runnable $runnable defaulted to $this->run.
+     */
+    public function __construct($runnable = NULL) {
 
-        $this->_log_writer = $log_writer;
+        if ($runnable === NULL) {
+            $runnable = array($this, 'run');
+        }
+
+        parent::__construct($runnable);
     }
 
     /**
@@ -43,18 +45,51 @@ abstract class Kohana_Unit {
      */
     public function start() {
 
-        Log::instance()->attach($this->_log_writer);
+        $this->before();
 
-        $this->run();
+        if (static::available()) {
+            parent::start();
+        } else {
+            $this->run();
+        }
 
-        // Flush writer
-        Log::instance()->write();
+        $this->after();
+    }
+
+    public function stop($_signal = SIGKILL, $_wait = false) {
+        static::available() AND parent::stop($_signal, $_wait);
+    }
+
+    public function is_running() {
+        return static::available() ? $this->isAlive() : FALSE;
+    }
+
+    /**
+     * Wait for unit to finish.
+     */
+    public function wait() {
+        while ($this->is_running()) {
+            sleep(1);
+        }
+    }
+
+    protected function before() {
+        Log::instance()->add(Log::INFO, 'Unit :unit has started its execution', array(':unit' => get_class($this)));
     }
 
     /**
      * Code executed in the unit
      */
     protected abstract function run();
+
+    protected function after() {
+
+        Log::instance()->add(Log::INFO, 'Unit :unit has stopped executing.', array(':unit' => get_class($this)));
+
+        // Flush logs when unit has run
+        Log::instance()->write();
+    }
+
 }
 
 ?>

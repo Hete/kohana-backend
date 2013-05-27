@@ -8,14 +8,14 @@ defined('SYSPATH') or die('No direct script access.');
  * @package Backend
  * @category Semaphore
  */
-class Semaphore_SysV extends Semaphore {
+class Kohana_Semaphore_SysV extends Semaphore {
 
-    public function get() {
-        return sem_get(uniqid());
+    public function get($key) {
+        return sem_get($key);
     }
 
     public function acquired($sem_identifier) {
-        throw Kohana_Exception("SysV does not support acquired state.");
+        throw new Kohana_Exception('SystemV does not support acquired state.');
     }
 
     public function acquire($sem_identifier) {

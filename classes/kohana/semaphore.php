@@ -11,7 +11,7 @@ defined('SYSPATH') or die('No direct script access.');
  */
 abstract class Kohana_Semaphore {
 
-    static $default_driver = "ORM";
+    static $default_driver = "SysV";
 
     /**
      * 
