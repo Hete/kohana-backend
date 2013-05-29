@@ -19,6 +19,7 @@ class Kohana_Backend {
     protected static $_instances = array();
 
     /**
+     * Get an instance of Backend.
      * 
      * @param string $name
      * @return Backend
@@ -37,33 +38,47 @@ class Kohana_Backend {
     }
 
     /**
-     *
+     * Semaphore id.
+     * 
      * @var variant 
      */
-    private $_semaphore_id;
+    private $semaphore_id;
 
     /**
-     *
+     * Units to run.
+     * 
      * @var array 
      */
     private $_units = array();
 
     /**
-     *
+     * Log writer
+     * 
      * @var Log_Backend
      */
-    private $_log_writer;
+    private $writer;
 
     private function __construct($name) {
 
-        $this->_log_writer = new Log_Backend();
+        $this->writer = new Log_Backend();
 
-        $this->_semaphore_id = Semaphore::instance()->get(hexdec(sha1($name)));
+        $this->semaphore_id = Semaphore::instance()->get(hexdec(sha1($name)));
 
         // Load all configured units
         foreach (Kohana::$config->load("backend.$name.units") as $unit) {
-            $this->_units[] = Unit::factory($unit, $this->_log_writer);
+            $this->_units[] = Unit::factory($unit, $this->writer);
         }
+    }
+
+    public function writer(Log_Writer $writer = NULL) {
+
+        if ($writer === NULL) {
+            return $this->writer;
+        }
+
+        $this->writer = $writer;
+
+        return $this;
     }
 
     /**
@@ -72,26 +87,31 @@ class Kohana_Backend {
      * @return array
      */
     public function messages() {
-        return $this->_log_writer->messages;
+        return $this->writer->messages;
     }
 
     /**
      * Acquire a semaphore.
      */
     public function acquire() {
-        Log::instance()->add(Log::INFO, 'Acquireing semaphore with id :id', array(":id" => $this->_semaphore_id));
-        Semaphore::instance()->acquire($this->_semaphore_id);
+        Semaphore::instance()->acquire($this->semaphore_id);
     }
 
+    /**
+     * Tells if the semaphore is acquired.
+     * 
+     * @return boolean
+     */
     public function acquired() {
-        return Semaphore::instance()->acquired($this->_semaphore_id);
+        return Semaphore::instance()->acquired($this->semaphore_id);
     }
 
+    /**
+     * Release the semaphore.
+     */
     public function release() {
-
-        Log::instance()->add(Log::INFO, 'Releasing semaphore with id :id', array(":id" => $this->_semaphore_id));
         try {
-            Semaphore::instance()->release($this->_semaphore_id);
+            Semaphore::instance()->release($this->semaphore_id);
         } catch (ErrorException $ee) {
             Log::instance()->add(Log::ERROR, $ee->getMessage());
         }
@@ -102,9 +122,7 @@ class Kohana_Backend {
      */
     public function start() {
 
-        Log::instance()->attach($this->_log_writer);
-
-        Log::instance()->add(Log::INFO, 'Acquireing a semaphore...');
+        Log::instance()->add(Log::INFO, 'Acquireing semaphore with id :id...', array(":id" => $this->semaphore_id));
         $this->acquire();
 
         Log::instance()->add(Log::INFO, 'Starting the backend...');
@@ -114,18 +132,18 @@ class Kohana_Backend {
         Log::instance()->add(Log::INFO, 'Waiting after units...');
         $this->wait();
 
-        Log::instance()->add(Log::INFO, 'Releasing a semaphore...');
+        Log::instance()->add(Log::INFO, 'Releasing semaphore with id :id...', array(":id" => $this->semaphore_id));
         $this->release();
 
         Log::instance()->add(Log::INFO, 'Backend has stopped.');
 
-        // Flush logs
-        Log::instance()->write();
-
         // Detach writer
-        Log::instance()->detach($this->_log_writer);
+        Log::instance()->detach($this->writer);
     }
 
+    /**
+     * Run all units.
+     */
     public function run() {
         // Starts all registered units
         foreach ($this->_units as $unit) {
