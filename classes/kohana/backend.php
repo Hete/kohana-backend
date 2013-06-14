@@ -26,7 +26,7 @@ class Kohana_Backend {
      */
     public static function instance($name = 'default') {
 
-        if (!array_key_exists($name, Backend::$_instances)) {
+        if (Arr::get(Backend::$_instances, $name) === NULL) {
 
             Backend::$_instances[$name] = new Backend($name);
 
@@ -54,22 +54,30 @@ class Kohana_Backend {
     /**
      * Log writer
      * 
-     * @var Log_Backend
+     * @var \Log_Writer
      */
     private $writer;
 
-    private function __construct($name) {
+    protected function __construct($name) {
 
-        $this->writer = new Log_Backend();
+        $this->writer = new Log_StdOut();
 
         $this->semaphore_id = Semaphore::instance()->get(hexdec(sha1($name)));
 
+        $units = (array) Kohana::$config->load("backend.$name.units");
+
         // Load all configured units
-        foreach (Kohana::$config->load("backend.$name.units") as $unit) {
-            $this->_units[] = Unit::factory($unit, $this->writer);
+        foreach ($units as $unit) {
+            $this->_units[] = Unit::factory($unit);
         }
     }
 
+    /**
+     * Get or set log writer.
+     * 
+     * @param Log_Writer $writer
+     * @return \Kohana_Backend
+     */
     public function writer(Log_Writer $writer = NULL) {
 
         if ($writer === NULL) {
@@ -79,15 +87,6 @@ class Kohana_Backend {
         $this->writer = $writer;
 
         return $this;
-    }
-
-    /**
-     * Get messages in the internal log writer.
-     * 
-     * @return array
-     */
-    public function messages() {
-        return $this->writer->messages;
     }
 
     /**
@@ -118,9 +117,12 @@ class Kohana_Backend {
     }
 
     /**
-     * Démarre le backend.
+     * Starts the backend.
      */
     public function start() {
+
+        $write_on_add = Log::$write_on_add;
+        Log::$write_on_add = TRUE;
 
         Log::instance()->add(Log::INFO, 'Acquireing semaphore with id :id...', array(":id" => $this->semaphore_id));
         $this->acquire();
@@ -139,6 +141,8 @@ class Kohana_Backend {
 
         // Detach writer
         Log::instance()->detach($this->writer);
+
+        Log::$write_on_add = $write_on_add;
     }
 
     /**

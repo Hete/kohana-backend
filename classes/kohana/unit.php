@@ -15,8 +15,8 @@ defined('SYSPATH') or die('No direct script access.');
  * @author Guillaume Poirier-Morency <guillaumepoiriermorency@gmail.com>
  * @copyright (c) 2013, Hète.ca Inc.
  */
-abstract class Kohana_Unit extends Thread {
-
+abstract class Kohana_Unit extends Thread {    
+   
     /**
      * 
      * @param string $name

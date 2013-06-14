@@ -17,16 +17,18 @@ if (Kohana::$is_cli) {
 
     function _backend() {
 
-        $options = CLI::options('backend');
+        $options = CLI::options('backend', 'action');
 
-        switch ($command = Arr::get($options, 'backend')) {
+        $group = Arr::get($options, 'backend');
+
+        switch ($command = Arr::get($options, 'action')) {
             case 'start':
             case NULL:
-                Backend::instance()->start();
+                Backend::instance($group)->start();
             case 'stop':
-                Backend::instance()->stop();
+                Backend::instance($group)->stop();
             case 'release':
-                Backend::instance()->release();
+                Backend::instance($group)->release();
                 exit(0);
                 break;
             default:

@@ -20,6 +20,14 @@ class Backend_Test extends Unittest_TestCase {
         Backend::instance('test')->start();
     }
 
+    public function test_timer_task() {
+
+        Unit::factory('Test_Timer')
+                ->every(2)
+                ->limit(3)
+                ->start();
+    }
+
 }
 
 ?>
