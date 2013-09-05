@@ -62,7 +62,7 @@ class Kohana_Backend {
 
         $this->writer = new Log_StdOut();
 
-        $this->semaphore_id = Semaphore::instance()->get(hexdec(sha1($name)));
+        $this->semaphore_id = Semaphore::instance()->get((int) hexdec(sha1($name)));
 
         $units = (array) Kohana::$config->load("backend.$name.units");
 
